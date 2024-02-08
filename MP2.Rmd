@@ -1,0 +1,29 @@
+---
+title: "MP2"
+author: "Jaan Selod and Tess Webb-Johnson"
+date: "2024-02-08"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+```
+
+```{r establishing values, warning = F, message = F}
+theta <- c(50, 75, 100, 125, 150) #theta is flexion angle
+```
+
+
+```{r determining Lmuscle and theta, warning = F, message = F}
+#getting Lmuscle
+law_cos2 <- function(l,r,theta) {
+  o = sqrt((-1)*(cos(theta)*2*l*r-(l^2)-(r^2)))
+  return(o)
+}
+
+#getting theta
+law_cos <- function(o,r,l) { #o is Larm; l is Li; r is Lm
+  
+}
+```
+
