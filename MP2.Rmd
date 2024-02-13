@@ -4,9 +4,14 @@ author: "Jaan Selod and Tess Webb-Johnson"
 date: "2024-02-08"
 output: html_document
 ---
+# Introduction:
 
+# Methods:
+
+# Results:
 ```{r setup, include=FALSE}
 library(tidyverse)
+library(knitr)
 arms <- read_csv("measurements.csv") %>%
   rename(l_arm = "Arm length (m)",
          l_i = "Inlever length (m)",
@@ -64,8 +69,9 @@ dat <- arms4 %>%
          theta = phi,
          muscle_torque = model(M_muscle, l_muscle_r, l_muscle, phi, l_i, 0.00105, 80),
          max_mass = muscle_torque/(l_out*9.81)) %>%
-  select(-2:-9) %>%
-  print()
+  select(-2:-9)
+  
+kable(dat, caption = "Table 1: Predicted Muscle Torque and Maximum Load", padding = 5)
 ```
 
 ```{r}
