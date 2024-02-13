@@ -76,6 +76,6 @@ kable(dat, caption = "Table 1: Predicted Muscle Torque and Maximum Load", paddin
 
 ```{r}
 dat %>%
-  ggplot(aes(x=flexion,y=muscle_torque, col=Subject)) + geom_point()
+  ggplot(aes(x=flexion,y=muscle_torque, col=Subject)) + geom_line() + ggtitle("Figure 1: Predicted Muscle Torque as a function of Flexion Angle")
 ```
 
