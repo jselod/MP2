@@ -7,23 +7,66 @@ output: html_document
 
 ```{r setup, include=FALSE}
 library(tidyverse)
+arms <- read_csv("measurements.csv") %>%
+  rename(l_arm = "Arm length (m)",
+         l_i = "Inlever length (m)",
+         l_out = "Outlever length (m)",
+         M_muscle = "Muscle mass (kg)")
 ```
 
 ```{r establishing values, warning = F, message = F}
-theta <- c(50, 75, 100, 125, 150) #theta is flexion angle
+theta <- c(50, 75, 100, 125, 150)
+theta_rad <- (theta*pi/180)
+#theta is flexion angle
 ```
-
 
 ```{r determining Lmuscle and theta, warning = F, message = F}
 #getting Lmuscle
-law_cos2 <- function(l,r,theta) {
+law_cos2 <- function(l,r,theta) { #l is arm length, r is inlever length (elbow to tendon)
   o = sqrt((-1)*(cos(theta)*2*l*r-(l^2)-(r^2)))
   return(o)
 }
 
 #getting theta
 law_cos <- function(o,r,l) { #o is Larm; l is Li; r is Lm
-  
+  phi = acos(-1*(o^2)+(l^2)+(r^2)/(2*l*r))
+  return(phi)
 }
+
+arms2 <- arms %>%
+  merge(theta_rad) %>%
+  rename(angle_rad = y) %>%
+  arrange(Subject) %>%
+  mutate(l_muscle = law_cos2(l_arm, l_i, angle_rad)) %>%
+  mutate(phi = law_cos(l_arm, l_i, l_muscle)) #phi is the insertion angle!
+```
+
+```{r determining Fmax, warning = F, message = F}
+arms3 <- arms2 %>%
+  filter(angle_rad == 150*pi/180) %>%
+  mutate(l_muscle_r = l_muscle) %>%
+  select(Subject, l_muscle_r)
+
+arms4 <- arms2 %>%
+  group_by(Subject) %>%
+  full_join(arms3, by = "Subject", copy = T)
+```
+
+```{r model time, warning = F, message = F}
+model <- function(mass, Lmuscler, Lmuscle, theta, Lo, rho, k) {
+  torque <- ((mass * cos(0)) / (rho * Lmuscler * 100)) * (k) * ((-6.25 * (Lmuscle * 100 / (Lmuscler * 0.8 * 100))^2) + (12.5 * ((Lmuscle * 100) / (Lmuscler * 0.8 * 100))) - 5.25) * sin(theta) * Lo
+  return(torque)
+}
+
+dat <- arms4 %>%
+  mutate(flexion = angle_rad,
+         Lmuscle = l_muscle,
+         theta = phi,
+         muscle_torque = model(M_muscle, l_muscle_r, l_muscle, phi, l_i, 0.00105, 80),
+         max_mass = muscle_torque/(l_out*9.81)) %>%
+  select(-2:-9) %>%
+  print()
+
+
 ```
 
