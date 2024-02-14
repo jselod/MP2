@@ -6,7 +6,16 @@ output: html_document
 ---
 # Introduction:
 
+Task of the MP: calculate how much torque is generated at the outlever position of the arm system.
+
 # Methods:
+
+To construct a dynamic-equilibrium-based computational model, we obtained biometric data pertaining to the biceps brachii system of the arm. Muscle mass was estimated by manipulating clay into the size and shape of the biceps and measuring this mass. Arm length was measured as the distance between the origin of the muscle at the scapular coracoid process and the inserting tendon on the proximal forearm. Inlever length was measured as the length between elbow joint and insertion point, and outlever length as the distance between elbow joint and middle of the palm. 
+Muscle length as a function of flexion angle was calculated using the cosine law and included the measured data of arm length and inlever length. These muscle length ranges were then used in another cosine calculation to determine insertion angle ranges for flexion angles.
+The torque model was designed such that muscle torque depended on muscle force, insertion angle, and inlever length:
+$$
+\tau_{muscle} = F_{muscle}\cdot\sin(\theta)\cdot L_i
+$$
 
 # Results:
 ```{r setup, include=FALSE}
@@ -76,6 +85,9 @@ kable(dat, caption = "Table 1: Predicted Muscle Torque and Maximum Load", paddin
 
 ```{r}
 dat %>%
-  ggplot(aes(x=flexion,y=muscle_torque, col=Subject)) + geom_line() + ggtitle("Figure 1: Predicted Muscle Torque as a function of Flexion Angle")
+  ggplot(aes(x=flexion,y=muscle_torque, col=Subject)) + geom_line() + ggtitle("Figure 1: Predicted Muscle Torque as a Function of Flexion Angle")
+
+dat %>%
+  ggplot(aes(x=flexion,y=max_mass, col=Subject)) + geom_line() + ggtitle("Figure 2: Predicted Maximum Load as a Function of Flexion Angle")
 ```
 
