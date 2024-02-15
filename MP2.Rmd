@@ -3,21 +3,23 @@ title: "MP2"
 author: "Jaan Selod and Tess Webb-Johnson"
 date: "2024-02-08"
 output: html_document
+bibliography: BIOL5380.bib
 ---
+
 # Introduction:
 
-Task of the MP: calculate how much torque is generated at the outlever position of the arm system.
+In this project, we explored the forearm as a third-order lever system, considering especially how skeletal structure, muscle length, and muscle mass affect force output and maximum load a system can support. The forearm is a classic example of a biological third-order lever system, as the "effort" (the biceps) is positioned between the fulcrum (the elbow, assumed to function as a hinge joint) and the load (held in the palm) (@openoregon). The specific goals were to predict the force and torque produced by the biceps system at the outlever position over a range of angles and test those predictions. We answered by constructing a computational model and assessing our predictions at the gym.
+
 
 # Methods:
 
-To construct a dynamic-equilibrium-based computational model, we obtained biometric data pertaining to the biceps brachii system of the arm. Muscle mass was estimated by manipulating clay into the size and shape of the biceps and measuring this mass. Arm length was measured as the distance between the origin of the muscle at the scapular coracoid process and the inserting tendon on the proximal forearm. Inlever length was measured as the length between elbow joint and insertion point, and outlever length as the distance between elbow joint and middle of the palm. 
-Muscle length as a function of flexion angle was calculated using the cosine law and included the measured data of arm length and inlever length. These muscle length ranges were then used in another cosine calculation to determine insertion angle ranges for flexion angles.
-The torque model was designed such that muscle torque depended on muscle force, insertion angle, and inlever length:
+To construct a dynamic-equilibrium-based computational model, we obtained biometric data pertaining to the biceps brachii system of the arm. Muscle mass was estimated by manipulating clay into the size and shape of the biceps and measuring this mass. Arm length was measured as the distance between the origin of the muscle at the scapular coracoid process and the inserting tendon on the proximal forearm. Inlever length was measured as the length between elbow joint and insertion point, and outlever length as the distance between elbow joint and middle of the palm. Muscle length as a function of flexion angle was calculated using the cosine law and included the measured data of arm length and inlever length. These muscle length ranges were then used in another cosine calculation to determine insertion angle ranges for flexion angles. The torque model was designed such that muscle torque depended on muscle force, insertion angle, and inlever length: 
 $$
 \tau_{muscle} = F_{muscle}\cdot\sin(\theta)\cdot L_i
 $$
 
 # Results:
+
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(knitr)
@@ -28,13 +30,13 @@ arms <- read_csv("measurements.csv") %>%
          M_muscle = "Muscle mass (kg)")
 ```
 
-```{r establishing values, warning = F, message = F}
+```{r establishing values, echo = F, warning = F, message = F}
 theta <- c(50, 75, 100, 125, 150)
 theta_rad <- (theta*pi/180)
 #theta is flexion angle
 ```
 
-```{r determining Lmuscle and theta, warning = F, message = F}
+```{r determining Lmuscle and theta, echo = F, warning = F, message = F}
 #getting Lmuscle
 law_cos2 <- function(l,r,theta) { #l is arm length, r is inlever length (elbow to tendon)
   o = sqrt((-1)*(cos(theta)*2*l*r-(l^2)-(r^2)))
@@ -55,7 +57,7 @@ arms2 <- arms %>%
   mutate(phi = law_cos(l_arm, l_i, l_muscle)) #phi is the insertion angle!
 ```
 
-```{r determining Fmax, warning = F, message = F}
+```{r determining Fmax, echo = F, warning = F, message = F}
 arms3 <- arms2 %>%
   filter(angle_rad == 150*pi/180) %>%
   mutate(l_muscle_r = l_muscle) %>%
@@ -66,7 +68,7 @@ arms4 <- arms2 %>%
   full_join(arms3, by = "Subject", copy = T)
 ```
 
-```{r model time, warning = F, message = F}
+```{r model time, echo = F, warning = F, message = F}
 model <- function(mass, Lmuscler, Lmuscle, theta, Lo, rho, k) {
   torque <- ((mass * cos(0)) / (rho * Lmuscler * 100)) * (k) * ((-6.25 * (Lmuscle * 100 / (Lmuscler * 0.8 * 100))^2) + (12.5 * ((Lmuscle * 100) / (Lmuscler * 0.8 * 100))) - 5.25) * sin(theta) * Lo
   return(torque)
@@ -80,14 +82,26 @@ dat <- arms4 %>%
          max_mass = muscle_torque/(l_out*9.81)) %>%
   select(-2:-9)
   
-kable(dat, caption = "Table 1: Predicted Muscle Torque and Maximum Load", padding = 5)
+kable(dat, caption = "Table 1: Predicted Muscle Torque and Maximum Load", padding = 2)
 ```
 
-```{r}
+```{r plots, echo = F, warning = F, message = F}
 dat %>%
-  ggplot(aes(x=flexion,y=muscle_torque, col=Subject)) + geom_line() + ggtitle("Figure 1: Predicted Muscle Torque as a Function of Flexion Angle")
+  ggplot(aes(x=flexion,y=muscle_torque, col=Subject)) + geom_point() + ggtitle("Figure 1: Predicted Muscle Torque as a Function of Flexion Angle") + ylab("Predicted Muscle Torque (N*m)") + xlab("Flexion Angle (rads)") + theme_minimal()
 
 dat %>%
-  ggplot(aes(x=flexion,y=max_mass, col=Subject)) + geom_line() + ggtitle("Figure 2: Predicted Maximum Load as a Function of Flexion Angle")
+  ggplot(aes(x=flexion,y=max_mass, col=Subject)) + geom_point() + ggtitle("Figure 2: Predicted Maximum Load as a Function of Flexion Angle") + ylab("Maximum Load (kg)") + xlab("Flexion Angle (rads)") + theme_minimal()
 ```
 
+# Discussion:
+
+As compiled in Table 1, the predicted torques and maximum loads varied for each subject's flexion angles. 
+The predicted torques increase slightly from 50º to 75º (in Table 1 as radians), but then decrease steadily as the flexion angles increase. This makes sense considering the force-length relationship, where muscles generate the greatest force at their ideal length, and the least amount of force when shortened or stretched relative to that length. @Arnold2013 describes the force-length relationship: "understanding how the muscle forces generated during locomotion are affected by the force-length and force-velocity properites requires estimation of the length of muscle fibers relative to their optimal length (i.e. normalized fiber length)." Although we did not measure muscle fiber ideal length, it is still possible to see the effects of muscle shortening in response to torque.
+
+The model's predictions for maximum loads at their respective angles were tested in the gym. Tess maxed out at 15 lbs at a 50º angle and Jaan maxed out at 22.5 lbs at a 75º angle. Tess's max load was slightly above what was predicted at about 12.1 lbs or 5.5 kg (see Table 1). Jaan's predicted max load was accurate, as the prediction was around 25 lbs or 11.68 kg (see Table 1). This indicates that the model produced mostly accurate predictions, with the exception of Tess's experimental maximum load being slighly higher than predicted. Slightly different results compared to predictions may be due to some issues with the model. The synergistic brachioradialis and brachialis muscles play a role in stabilizing movement and assisting the biceps during elbow flexion, and thus could have been incorporated into the model, as they contribute to the strength of the bicep curl. However, the model is largely consistent with the studied relationship between joint angles and the length-tension relationship. @Yang2014 conducted a study examining the angle at which muscle strength and activation were maximized in the biceps and triceps muscles. They found that the muscle strength and activation for the biceps were highest at the joint angle of 56º, confirming that muscle strength and activation were highest at the joint angle where concentric contraction was 20% more stretched than in the resting point. Our model seems to concur with these findings, as the maximum load was determined to be produced at angles 50º and 70º. 
+
+# Author Contributions:
+- Tess: Introduction, Results (parts), Discussion, Bibliography
+- Jaan: Introduction (parts), Results, Discussion (parts)
+
+# References:
